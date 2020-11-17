@@ -1,8 +1,12 @@
 import { DataSource } from '@angular/cdk/collections';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
-import { map } from 'rxjs/operators';
-import { Observable, of as observableOf, merge } from 'rxjs';
+import { catchError, finalize, map, startWith, switchMap } from 'rxjs/operators';
+import { Observable, of as observableOf, merge, BehaviorSubject } from 'rxjs';
+import { AtividadesService } from '../atividades.service';
+import { PaginacaoModel } from '../data-model/paginacao.model';
+import { Atividade } from '../data-model/atividade.model';
+
 
 // TODO: Replace this with your own data model type
 export interface AtividadesItem {
@@ -12,26 +16,26 @@ export interface AtividadesItem {
 
 // TODO: replace this with real data from your application
 const EXAMPLE_DATA: AtividadesItem[] = [
-  {id: 1, name: 'Hydrogen'},
-  {id: 2, name: 'Helium'},
-  {id: 3, name: 'Lithium'},
-  {id: 4, name: 'Beryllium'},
-  {id: 5, name: 'Boron'},
-  {id: 6, name: 'Carbon'},
-  {id: 7, name: 'Nitrogen'},
-  {id: 8, name: 'Oxygen'},
-  {id: 9, name: 'Fluorine'},
-  {id: 10, name: 'Neon'},
-  {id: 11, name: 'Sodium'},
-  {id: 12, name: 'Magnesium'},
-  {id: 13, name: 'Aluminum'},
-  {id: 14, name: 'Silicon'},
-  {id: 15, name: 'Phosphorus'},
-  {id: 16, name: 'Sulfur'},
-  {id: 17, name: 'Chlorine'},
-  {id: 18, name: 'Argon'},
-  {id: 19, name: 'Potassium'},
-  {id: 20, name: 'Calcium'},
+  { id: 1, name: 'Hydrogen' },
+  { id: 2, name: 'Helium' },
+  { id: 3, name: 'Lithium' },
+  { id: 4, name: 'Beryllium' },
+  { id: 5, name: 'Boron' },
+  { id: 6, name: 'Carbon' },
+  { id: 7, name: 'Nitrogen' },
+  { id: 8, name: 'Oxygen' },
+  { id: 9, name: 'Fluorine' },
+  { id: 10, name: 'Neon' },
+  { id: 11, name: 'Sodium' },
+  { id: 12, name: 'Magnesium' },
+  { id: 13, name: 'Aluminum' },
+  { id: 14, name: 'Silicon' },
+  { id: 15, name: 'Phosphorus' },
+  { id: 16, name: 'Sulfur' },
+  { id: 17, name: 'Chlorine' },
+  { id: 18, name: 'Argon' },
+  { id: 19, name: 'Potassium' },
+  { id: 20, name: 'Calcium' },
 ];
 
 /**
@@ -39,12 +43,19 @@ const EXAMPLE_DATA: AtividadesItem[] = [
  * encapsulate all logic for fetching and manipulating the displayed data
  * (including sorting, pagination, and filtering).
  */
-export class AtividadesDataSource extends DataSource<AtividadesItem> {
-  data: AtividadesItem[] = EXAMPLE_DATA;
+export class AtividadesDataSource extends DataSource<Atividade> {
+  data: Atividade[] = [];
   paginator: MatPaginator;
   sort: MatSort;
+  resultsLength = 0;
+  isLoadingResults = true;
+  isRateLimitReached = false;
 
-  constructor() {
+  private lessonsSubject = new BehaviorSubject<Atividade[]>([]);
+  private loadingSubject = new BehaviorSubject<boolean>(false);
+  private totalSubject = new BehaviorSubject<number>(0);
+
+  constructor(private atividadesService: AtividadesService) {
     super();
   }
 
@@ -53,25 +64,17 @@ export class AtividadesDataSource extends DataSource<AtividadesItem> {
    * the returned stream emits new items.
    * @returns A stream of the items to be rendered.
    */
-  connect(): Observable<AtividadesItem[]> {
+  connect(): Observable<Atividade[]> {
     // Combine everything that affects the rendered data into one update
     // stream for the data-table to consume.
-    const dataMutations = [
-      observableOf(this.data),
-      this.paginator.page,
-      this.sort.sortChange
-    ];
-
-    return merge(...dataMutations).pipe(map(() => {
-      return this.getPagedData(this.getSortedData([...this.data]));
-    }));
+    return this.lessonsSubject.asObservable();
   }
 
   /**
    *  Called when the table is being destroyed. Use this function, to clean up
    * any open connections or free any held resources that were set up during connect.
    */
-  disconnect() {}
+  disconnect() { }
 
   /**
    * Paginate the data (client-side). If you're using server-side pagination,
@@ -100,6 +103,23 @@ export class AtividadesDataSource extends DataSource<AtividadesItem> {
       }
     });
   }
+
+  loadLessons(courseId: number, filter = '',
+    sortDirection = 'asc', pageIndex = 1, pageSize = 3) {
+
+    this.loadingSubject.next(true);
+
+    this.atividadesService.findLessons(courseId, filter, sortDirection,
+      pageIndex, pageSize).pipe(
+        catchError(() => observableOf([])),
+        finalize(() => this.loadingSubject.next(false))
+      )
+      .subscribe((atividades: PaginacaoModel) => {
+        this.lessonsSubject.next(atividades.data);
+        this.totalSubject.next(atividades.total);
+      });
+  }
+
 }
 
 /** Simple sort comparator for example ID/Name columns (for client-side sorting). */
