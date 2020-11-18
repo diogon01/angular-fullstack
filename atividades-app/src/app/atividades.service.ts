@@ -13,15 +13,13 @@ export class AtividadesService {
 
   constructor(private http: HttpClient) { }
 
-  findLessons(
-    id: number, filter = '', sortOrder = 'asc',
-    pageNumber = 0, pageSize = 3): Observable<PaginacaoModel> {
+  findLessons(filter: string, sortOrder: string,
+    pageNumber: number, pageSize: number): Observable<PaginacaoModel> {
     return this.http.get<PaginacaoModel>(this.baseUrl + '/api/atividades', {
       params: new HttpParams()
-        .set('id', id.toString())
         .set('filter', filter)
         .set('sortOrder', sortOrder)
-        .set('pageNumber', pageNumber.toString())
+        .set('pageNumber', (pageNumber + 1).toString())
         .set('pageSize', pageSize.toString())
     });
   }

@@ -29,9 +29,12 @@ class AtividadeController {
     try {
       let atividades = Atividade.query().orderBy('id', 'desc')
 
-      if (filter) {
+      if (filter && filter != "") {
         const filtro = await Atividade.query()
-          .where('ds_nome', 'LIKE', '%' + filter + '%')
+          .where('nome', 'LIKE', '%' + filter + '%')
+          .orWhere('tipo', 'LIKE', '%' + filter + '%')
+          .orWhere('prioridade', 'LIKE', '%' + filter + '%')
+          .orWhere('descricao', 'LIKE', '%' + filter + '%')
           .pluck('id');
 
         atividades.whereIn('id', filtro);

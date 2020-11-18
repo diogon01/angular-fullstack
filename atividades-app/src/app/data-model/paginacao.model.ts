@@ -4,6 +4,6 @@ export class PaginacaoModel {
     page: number;
     perPage: number;
     total: number;
-    items: any;
-    total_count: number;
+    direction: string;
+    filter: string;
 }

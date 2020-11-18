@@ -51,9 +51,14 @@ export class AtividadesDataSource extends DataSource<Atividade> {
   isLoadingResults = true;
   isRateLimitReached = false;
 
+
   private lessonsSubject = new BehaviorSubject<Atividade[]>([]);
   private loadingSubject = new BehaviorSubject<boolean>(false);
+  private loadingpIndex = new BehaviorSubject<number>(1);
+  public loading$ = this.loadingSubject.asObservable();
   private totalSubject = new BehaviorSubject<number>(0);
+  public total$ = this.totalSubject.asObservable();
+  public pIndex$ = this.loadingpIndex.asObservable();
 
   constructor(private atividadesService: AtividadesService) {
     super();
@@ -76,40 +81,13 @@ export class AtividadesDataSource extends DataSource<Atividade> {
    */
   disconnect() { }
 
-  /**
-   * Paginate the data (client-side). If you're using server-side pagination,
-   * this would be replaced by requesting the appropriate data from the server.
-   */
-  private getPagedData(data: AtividadesItem[]) {
-    const startIndex = this.paginator.pageIndex * this.paginator.pageSize;
-    return data.splice(startIndex, this.paginator.pageSize);
-  }
 
-  /**
-   * Sort the data (client-side). If you're using server-side sorting,
-   * this would be replaced by requesting the appropriate data from the server.
-   */
-  private getSortedData(data: AtividadesItem[]) {
-    if (!this.sort.active || this.sort.direction === '') {
-      return data;
-    }
 
-    return data.sort((a, b) => {
-      const isAsc = this.sort.direction === 'asc';
-      switch (this.sort.active) {
-        case 'name': return compare(a.name, b.name, isAsc);
-        case 'id': return compare(+a.id, +b.id, isAsc);
-        default: return 0;
-      }
-    });
-  }
-
-  loadLessons(courseId: number, filter = '',
-    sortDirection = 'asc', pageIndex = 1, pageSize = 3) {
+  loadLessons(filter: string, sortDirection: string, pageIndex: number, pageSize: number) {
 
     this.loadingSubject.next(true);
 
-    this.atividadesService.findLessons(courseId, filter, sortDirection,
+    this.atividadesService.findLessons(filter, sortDirection,
       pageIndex, pageSize).pipe(
         catchError(() => observableOf([])),
         finalize(() => this.loadingSubject.next(false))
