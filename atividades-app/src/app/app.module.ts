@@ -12,6 +12,7 @@ import { AtividadesService } from './atividades.service';
 import { HttpClientModule } from '@angular/common/http';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatInputModule } from '@angular/material/input';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 
 @NgModule({
   declarations: [
@@ -28,6 +29,7 @@ import { MatInputModule } from '@angular/material/input';
     MatSortModule,
     MatToolbarModule,
     MatInputModule,
+    MatCheckboxModule
   ],
   providers: [AtividadesService],
   bootstrap: [AppComponent]

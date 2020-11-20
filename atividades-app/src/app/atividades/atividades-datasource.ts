@@ -6,37 +6,8 @@ import { Observable, of as observableOf, merge, BehaviorSubject } from 'rxjs';
 import { AtividadesService } from '../atividades.service';
 import { PaginacaoModel } from '../data-model/paginacao.model';
 import { Atividade } from '../data-model/atividade.model';
+import { SelectionModel } from '@angular/cdk/collections';
 
-
-// TODO: Replace this with your own data model type
-export interface AtividadesItem {
-  name: string;
-  id: number;
-}
-
-// TODO: replace this with real data from your application
-const EXAMPLE_DATA: AtividadesItem[] = [
-  { id: 1, name: 'Hydrogen' },
-  { id: 2, name: 'Helium' },
-  { id: 3, name: 'Lithium' },
-  { id: 4, name: 'Beryllium' },
-  { id: 5, name: 'Boron' },
-  { id: 6, name: 'Carbon' },
-  { id: 7, name: 'Nitrogen' },
-  { id: 8, name: 'Oxygen' },
-  { id: 9, name: 'Fluorine' },
-  { id: 10, name: 'Neon' },
-  { id: 11, name: 'Sodium' },
-  { id: 12, name: 'Magnesium' },
-  { id: 13, name: 'Aluminum' },
-  { id: 14, name: 'Silicon' },
-  { id: 15, name: 'Phosphorus' },
-  { id: 16, name: 'Sulfur' },
-  { id: 17, name: 'Chlorine' },
-  { id: 18, name: 'Argon' },
-  { id: 19, name: 'Potassium' },
-  { id: 20, name: 'Calcium' },
-];
 
 /**
  * Data source for the Atividades view. This class should
@@ -59,6 +30,7 @@ export class AtividadesDataSource extends DataSource<Atividade> {
   private totalSubject = new BehaviorSubject<number>(0);
   public total$ = this.totalSubject.asObservable();
   public pIndex$ = this.loadingpIndex.asObservable();
+  selection = new SelectionModel<Atividade>(true, []);
 
   constructor(private atividadesService: AtividadesService) {
     super();
@@ -95,7 +67,30 @@ export class AtividadesDataSource extends DataSource<Atividade> {
       .subscribe((atividades: PaginacaoModel) => {
         this.lessonsSubject.next(atividades.data);
         this.totalSubject.next(atividades.total);
+        this.selection.clear()
       });
+  }
+
+  /** Whether the number of selected elements matches the total number of rows. */
+  isAllSelected() {
+    const numSelected = this.selection.selected.length;
+    const numRows = this.data.length;
+    return numSelected === numRows;
+  }
+
+  /** Selects all rows if they are not all selected; otherwise clear selection. */
+  masterToggle() {
+    this.isAllSelected() ?
+      this.selection.clear() :
+      this.data.forEach(row => this.selection.select(row));
+  }
+
+  /** The label for the checkbox on the passed row */
+  checkboxLabel(row?: Atividade): string {
+    if (!row) {
+      return `${this.isAllSelected() ? 'select' : 'deselect'} all`;
+    }
+    return `${this.selection.isSelected(row) ? 'deselect' : 'select'} row ${row.id + 1}`;
   }
 
 }

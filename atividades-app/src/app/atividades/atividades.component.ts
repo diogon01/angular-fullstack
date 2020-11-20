@@ -1,3 +1,4 @@
+import { SelectionModel } from '@angular/cdk/collections';
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
@@ -5,8 +6,9 @@ import { MatTable } from '@angular/material/table';
 import { fromEvent, merge } from 'rxjs';
 import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
 import { AtividadesService } from '../atividades.service';
+import { Atividade } from '../data-model/atividade.model';
 import { PaginacaoModel } from '../data-model/paginacao.model';
-import { AtividadesDataSource, AtividadesItem } from './atividades-datasource';
+import { AtividadesDataSource } from './atividades-datasource';
 
 @Component({
   selector: 'app-atividades',
@@ -16,13 +18,12 @@ import { AtividadesDataSource, AtividadesItem } from './atividades-datasource';
 export class AtividadesComponent implements AfterViewInit, OnInit {
   @ViewChild(MatPaginator) paginator: MatPaginator;
   @ViewChild(MatSort) sort: MatSort;
-  @ViewChild(MatTable) table: MatTable<AtividadesItem>;
   @ViewChild('input') input: ElementRef;
   dataSource: AtividadesDataSource;
   paginacaoModel: PaginacaoModel
 
   /** Columns displayed in the table. Columns IDs can be added, removed, or reordered. */
-  displayedColumns = ['id', 'name', 'tipo', 'prioridade', 'descricao', 'data'];
+  displayedColumns = ['select', 'id', 'name', 'tipo', 'prioridade', 'descricao', 'data'];
 
   constructor(private atividadesService: AtividadesService) { }
 
@@ -71,5 +72,9 @@ export class AtividadesComponent implements AfterViewInit, OnInit {
       this.sort.direction,
       this.paginator.pageIndex,
       this.paginator.pageSize);
+  }
+
+  masterToggle() {
+    this.dataSource.masterToggle();
   }
 }
